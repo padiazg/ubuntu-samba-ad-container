@@ -154,7 +154,7 @@ ldapsearch -x -W \
 ### Create a group
 First we create group.ldif file
 ```ldif
-dn: CN=team-a,CN=Users,DC=local,DC=patodiaz,DC=io
+dn: cn=team-a,cn=Users,dc=local,dc=patodiaz,dc=io
 objectClass: top
 objectClass: group
 cn: team-a
@@ -168,12 +168,12 @@ ldapadd -cxWD "cn=Administrator,cn=Users,dc=local,dc=patodiaz,dc=io" \
 Check the group was created
 ```bash
 ldapsearch -xWD "cn=Administrator,cn=Users,dc=local,dc=patodiaz,dc=io" \
-  -b dc=local,dc=patodiaz,dc=io "(&(objectClass=group)(CN=TeamA))"
+  -b dc=local,dc=patodiaz,dc=io "(&(objectClass=group)(cn=TeamA))"
 ```
 ### Create an user
 Let's create a file named jhon.ldif
 ```ldif
-dn: CN=Jhon,CN=Users,DC=local,DC=patodiaz,DC=io
+dn: cn=Jhon,cn=Users,dc=local,dc=patodiaz,dc=io
 objectClass: top
 objectClass: person
 objectClass: organizationalPerson
@@ -196,15 +196,15 @@ Check that the user was created
 ```bash
 ldapsearch -xWD "cn=Administrator,cn=Users,dc=local,dc=patodiaz,dc=io" \
   -b dc=local,dc=patodiaz,dc=io \
-  "(&(objectClass=user)(CN=Jhon))"
+  "(&(objectClass=user)(cn=Jhon))"
 ```
 Add a user to a group
 add-to-group.ldif
 ```ldif
-dn: CN=dbagrp,CN=Builtin,DC=local,DC=patodiaz,DC=io
+dn: cn=dbagrp,cn=Builtin,dc=local,dc=patodiaz,dc=io
 changetype: modify
 add: member
-member: CN=Adam,CN=Users,DC=local,DC=patodiaz,DC=io
+member: cn=Adam,cn=Users,dc=local,dc=patodiaz,dc=io
 ```
 Add the user to the group
 ```bash
