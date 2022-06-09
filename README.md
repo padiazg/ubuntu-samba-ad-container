@@ -87,9 +87,9 @@ services:
     image: padiazg/samba4dc:ubuntu
     privileged: true
     environment:
-      - SAMBA_DOMAIN=portal
-      - SAMBA_REALM=portal.tyk.io
-      - SAMBA_ADMIN_PASSWORD=...secr3t... 
+      - SAMBA_DOMAIN=local
+      - SAMBA_REALM=local.patodiaz.io
+      - SAMBA_ADMIN_PASSWORD=secr3t* 
       - LDAP_ALLOW_INSECURE=true
     volumes:
       - ~/tmp/smb-conf:/etc/samba
@@ -121,3 +121,93 @@ docker-compose up -d
 ```
 
 Watch the logs via `docker-compose logs -f`.
+
+## Test it
+
+### List all objects in domain
+```bash
+ldapsearch -x -W \
+  -D "cn=Administrator,cn=Users,dc=local,dc=patodiaz,dc=io" \
+  -b dc=local,dc=patodiaz,dc=io
+```
+### All groups
+```bash
+ldapsearch -x -W \
+  -D "cn=Administrator,cn=Users,dc=local,dc=patodiaz,dc=io" \
+  -b dc=local,dc=patodiaz,dc=io \
+  "(objectClass=group)"
+```
+### All UOs
+```bash
+ldapsearch -x -W \
+  -D "cn=Administrator,cn=Users,dc=local,dc=patodiaz,dc=io" \
+  -b dc=local,dc=patodiaz,dc=io \
+  "(objectClass=organizationalUnit)"
+```
+### List all Groups and OUs
+```bash
+ldapsearch -x -W \
+  -D "cn=Administrator,cn=Users,dc=local,dc=patodiaz,dc=io" \
+  -b dc=local,dc=patodiaz,dc=io \
+  "(|(objectClass=organizationalUnit)(objectClass=Group))"
+```
+### Create a group
+First we create group.ldif file
+```ldif
+dn: CN=team-a,CN=Users,DC=local,DC=patodiaz,DC=io
+objectClass: top
+objectClass: group
+cn: team-a
+gidNumber: 678
+```
+Then we create the group using this file
+```bash
+ldapadd -cxWD "cn=Administrator,cn=Users,dc=local,dc=patodiaz,dc=io" \
+-f group.ldif
+```
+Check the group was created
+```bash
+ldapsearch -xWD "cn=Administrator,cn=Users,dc=local,dc=patodiaz,dc=io" \
+  -b dc=local,dc=patodiaz,dc=io "(&(objectClass=group)(CN=TeamA))"
+```
+### Create an user
+Let's create a file named jhon.ldif
+```ldif
+dn: CN=Jhon,CN=Users,DC=local,DC=patodiaz,DC=io
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: user
+cn: Jhon
+uid: jhon
+uidNumber: 16859
+gidNumber: 100
+homeDirectory: /home/jhon
+loginShell: /bin/bash
+gecos: jhon
+userPassword: {crypt}x
+```
+Create the user
+```bash
+ldapadd -xWD "cn=Administrator,cn=Users,dc=local,dc=patodiaz,dc=io" \
+  -f jhon.ldif
+```
+Check that the user was created
+```bash
+ldapsearch -xWD "cn=Administrator,cn=Users,dc=local,dc=patodiaz,dc=io" \
+  -b dc=local,dc=patodiaz,dc=io \
+  "(&(objectClass=user)(CN=Jhon))"
+```
+Add a user to a group
+add-to-group.ldif
+```ldif
+dn: CN=dbagrp,CN=Builtin,DC=local,DC=patodiaz,DC=io
+changetype: modify
+add: member
+member: CN=Adam,CN=Users,DC=local,DC=patodiaz,DC=io
+```
+Add the user to the group
+```bash
+ldapmodify -xWD "cn=Administrator,cn=Users,dc=local,dc=patodiaz,dc=io" \
+  -f add-to-group.ldif
+```

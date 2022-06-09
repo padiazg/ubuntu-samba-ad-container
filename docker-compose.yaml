@@ -4,9 +4,9 @@ services:
     image: padiazg/samba4dc:ubuntu
     privileged: true
     environment:
-      - SAMBA_DOMAIN=portal
-      - SAMBA_REALM=portal.tyk.io
-      - SAMBA_ADMIN_PASSWORD=...secr3t... 
+      - SAMBA_DOMAIN=local
+      - SAMBA_REALM=local.patodiaz.io
+      - SAMBA_ADMIN_PASSWORD=secr3t*
       - LDAP_ALLOW_INSECURE=true
     volumes:
       - ~/tmp/smb-conf:/etc/samba
