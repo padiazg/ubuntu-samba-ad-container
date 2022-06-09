@@ -1,24 +1,29 @@
 version: '2'
 services:
   samba:
-    image: tkaefer/alpine-samba-ad-container
+    image: padiazg/samba4dc:ubuntu
+    privileged: true
     environment:
-      - SAMBA_DOMAIN=TEST
-      - SAMBA_REALM=TEST.MYDOMAIN.COM
+      - SAMBA_DOMAIN=portal
+      - SAMBA_REALM=portal.tyk.io
+      - SAMBA_ADMIN_PASSWORD=...secr3t... 
+      - LDAP_ALLOW_INSECURE=true
     volumes:
-      - /tmp/smb-conf:/etc/samba
-      - /tmp/krb-conf/krb5.conf:/etc/krb5.conf
-      - /tmp/smb-data:/var/lib/samba
-      - /tmp/krb-data:/var/lib/krb5kdc
+      - ~/tmp/smb-conf:/etc/samba
+      - ~/tmp/krb-conf/krb5.conf:/etc/krb5.conf
+      - samba4ad-smb-data:/var/lib/samba
+      - samba4ad-krb-data:/var/lib/krb5kdc
     ports:
-      - "22:22"
-      - "53:53"
-      - "389:389"
-      - "88:88"
-      - "135:135"
-      - "139:139"
-      - "138:138"
-      - "445:445"
-      - "464:464"
-      - "3268:3268"
-      - "3269:3269"
+      # - "53:53"     # dns
+      - "389:389"     # ldap
+      # - "88:88"     # kdc
+      # - "135:135"   # rpc
+      # - "139:139"   # smbd
+      # - "445:445"   # smbd
+      # - "464:464"   # kdc
+      - "3268:3268" # ldap
+      - "3269:3269" # ldap 
+
+volumes:
+  samba4ad-smb-data:
+  samba4ad-krb-data:

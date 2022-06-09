@@ -1,4 +1,5 @@
-## Samba 4 AD container based on Alpine Linux
+## Samba 4 AD container
+A simple domain controller using Samba 
 
 ### Credits
 Some parts are collected from:
@@ -6,12 +7,21 @@ Some parts are collected from:
 * https://github.com/myrjola/docker-samba-ad-dc
 * https://wiki.samba.org/index.php/Samba,_Active_Directory_%26_LDAP
 
+Created based on https://hub.docker.com/r/militellovinx/samba-ad and https://github.com/vmilitello/samba-ad
+
 
 ### Usage
-
-Without any config and thrown away when terminated:
+Quick and dirty, without any config and thrown away when terminated:
 ```
-docker run -it --rm tkaefer/alpine-samba-ad-container
+docker run -it --rm \
+    --privileged \
+    -e SAMBA_ADMIN_PASSWORD=...secr3t... \
+    -e SAMBA_DOMAIN=local \
+    -e SAMBA_REALM=local.patodiaz.io \
+    -e LDAP_ALLOW_INSECURE=true \
+    -p 389:389 \
+    --name smb4ad \
+    padiazg/samba4dc:ubuntu
 ```
 
 ### Environment variables
@@ -36,14 +46,28 @@ Using (or reusing data) is done by providing
 * `/var/lib/krb5kdc/`
 
 as volumes to the docker container.
+It's better if `/usr/lib/samba/` and `/var/lib/krb5kdc/` are mounted using docker volumes to avoid permissions issues
 
-### Example
+### Examples
 
 #### Plain docker
 ```
+mkdir ~/tmp/krb-conf
+mkdir ~/tmp/smb-conf
 touch /tmp/krb-conf/krb5.conf
 
-docker run -d -e SAMBA_DOMAIN=TEST -e SAMBA_REALM=TEST.MYDOMAIN.COM -v /tmp/smb-conf:/etc/samba -v /tmp/krb-conf/krb5.conf:/etc/krb5.conf -v /tmp/smb-data:/var/lib/samba -v /tmp/krb-data:/var/lib/krb5kdc --name smb4ad tkaefer/alpine-samba-ad-container
+docker run -it --rm \
+-e SAMBA_ADMIN_PASSWORD=...secr3t... \
+-e SAMBA_DOMAIN=local \
+-e SAMBA_REALM=local.patodiaz.io \
+-e LDAP_ALLOW_INSECURE=true \
+--mount type=bind,source=$HOME/tmp/krb-conf/krb5.conf,target=/etc/krb5.conf \
+--mount type=bind,source=$HOME/tmp/smb-conf,target=/etc/samba \
+--mount type=volume,source=samba4ad-krb-data-ubuntu,target=/var/lib/krb5kdc \
+--mount type=volume,source=samba4ad-smb-data-ubuntu,target=/var/lib/samba \
+-p 389:389 \
+--name smb4ad \
+padiazg/samba4dc:ubuntu
 ```
 
 For details how to store data in directories, containers etc. please check the Docker documentation for details.
@@ -51,6 +75,13 @@ For details how to store data in directories, containers etc. please check the D
 #### Docker compose
 
 Get the `docker-compose.yaml` [file from the github repo](https://github.com/tkaefer/alpine-samba-ad-container/blob/master/docker-compose.yaml).
-Copy it to an appropriate directory, do a `touch /tmp/krb-conf/krb5.conf` and run `docker-compose up -d` within that directory.
+
+```bash
+mkdir ~/tmp/krb-conf
+mkdir ~/tmp/smb-conf
+touch /tmp/krb-conf/krb5.conf
+
+docker-compose up -d
+```
 
 Watch the logs via `docker-compose logs -f`.
