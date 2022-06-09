@@ -5,10 +5,11 @@ A simple domain controller using Samba
 Some parts are collected from:
 * https://github.com/Osirium/docker-samba-ad-dc
 * https://github.com/myrjola/docker-samba-ad-dc
-* https://wiki.samba.org/index.php/Samba,_Active_Directory_%26_LDAP
 
 Created based on https://hub.docker.com/r/militellovinx/samba-ad and https://github.com/vmilitello/samba-ad
 
+### Setting up Samba as an Active Directory Domain Controller
+https://wiki.samba.org/index.php/Setting_up_Samba_as_an_Active_Directory_Domain_Controller
 
 ### Usage
 Quick and dirty, without any config and thrown away when terminated:
@@ -45,8 +46,8 @@ Using (or reusing data) is done by providing
 * `/usr/lib/samba/`
 * `/var/lib/krb5kdc/`
 
-as volumes to the docker container.
-It's better if `/usr/lib/samba/` and `/var/lib/krb5kdc/` are mounted using docker volumes to avoid permissions issues
+as volumes to the docker container.  
+> It's better if `/usr/lib/samba/` and `/var/lib/krb5kdc/` are mounted using docker volumes to avoid permissions issues
 
 ### Examples
 
@@ -56,6 +57,9 @@ mkdir ~/tmp/krb-conf
 mkdir ~/tmp/smb-conf
 touch /tmp/krb-conf/krb5.conf
 
+docker volume create samba4ad-smb-data-ubuntu
+docker volume create samba4ad-krb-data-ubuntu
+
 docker run -it --rm \
 -e SAMBA_ADMIN_PASSWORD=...secr3t... \
 -e SAMBA_DOMAIN=local \
@@ -63,8 +67,8 @@ docker run -it --rm \
 -e LDAP_ALLOW_INSECURE=true \
 --mount type=bind,source=$HOME/tmp/krb-conf/krb5.conf,target=/etc/krb5.conf \
 --mount type=bind,source=$HOME/tmp/smb-conf,target=/etc/samba \
---mount type=volume,source=samba4ad-krb-data-ubuntu,target=/var/lib/krb5kdc \
 --mount type=volume,source=samba4ad-smb-data-ubuntu,target=/var/lib/samba \
+--mount type=volume,source=samba4ad-krb-data-ubuntu,target=/var/lib/krb5kdc \
 -p 389:389 \
 --name smb4ad \
 padiazg/samba4dc:ubuntu
@@ -74,8 +78,40 @@ For details how to store data in directories, containers etc. please check the D
 
 #### Docker compose
 
-Get the `docker-compose.yaml` [file from the github repo](https://github.com/tkaefer/alpine-samba-ad-container/blob/master/docker-compose.yaml).
+Get the `docker-compose.yaml` [file from the github repo](https://github.com/padiazg/ubuntu-samba-ad-container/blob/master/docker-compose.yaml).
 
+```yaml
+version: '3'
+services:
+  samba:
+    image: padiazg/samba4dc:ubuntu
+    privileged: true
+    environment:
+      - SAMBA_DOMAIN=portal
+      - SAMBA_REALM=portal.tyk.io
+      - SAMBA_ADMIN_PASSWORD=...secr3t... 
+      - LDAP_ALLOW_INSECURE=true
+    volumes:
+      - ~/tmp/smb-conf:/etc/samba
+      - ~/tmp/krb-conf/krb5.conf:/etc/krb5.conf
+      - samba4ad-smb-data:/var/lib/samba
+      - samba4ad-krb-data:/var/lib/krb5kdc
+    ports:
+      # - "53:53"     # dns
+      - "389:389"     # ldap
+      # - "88:88"     # kdc
+      # - "135:135"   # rpc
+      # - "139:139"   # smbd
+      # - "445:445"   # smbd
+      # - "464:464"   # kdc
+      - "3268:3268"   # ldap
+      - "3269:3269"   # ldap 
+
+volumes:
+  samba4ad-smb-data:
+  samba4ad-krb-data:
+```
+then run it
 ```bash
 mkdir ~/tmp/krb-conf
 mkdir ~/tmp/smb-conf

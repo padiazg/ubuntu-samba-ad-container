@@ -1,4 +1,4 @@
-version: '2'
+version: '3'
 services:
   samba:
     image: padiazg/samba4dc:ubuntu
@@ -21,8 +21,8 @@ services:
       # - "139:139"   # smbd
       # - "445:445"   # smbd
       # - "464:464"   # kdc
-      - "3268:3268" # ldap
-      - "3269:3269" # ldap 
+      - "3268:3268"   # ldap
+      - "3269:3269"   # ldap 
 
 volumes:
   samba4ad-smb-data:
